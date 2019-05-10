@@ -98,7 +98,7 @@ class Raycaster(object):
       self.draw_stake(x, h, colors[c])
 
 pygame.init()
-screen = pygame.display.set_mode((1000, 500)) #, pygame.FULLSCREEN)
+screen = pygame.display.set_mode((1000, 500))
 
 r = Raycaster(screen)
 r.load_map('./map.txt')

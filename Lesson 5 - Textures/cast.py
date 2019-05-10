@@ -1,15 +1,25 @@
 import pygame
-from math import pi, cos, sin
+from math import pi, cos, sin, floor
 
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BACKGROUND = (0, 255, 255)
 
-colors = {
-  "1": (146, 60, 63),
-  "2": (233, 70, 63),
-  "3": (0, 130, 168)
+
+wall1 = pygame.image.load('./wall1.png')
+wall2 = pygame.image.load('./wall2.png')
+wall3 = pygame.image.load('./wall3.png')
+wall4 = pygame.image.load('./wall4.png')
+wall5 = pygame.image.load('./wall5.png')
+
+
+textures = {
+  "1": wall1,
+  "2": wall2,
+  "3": wall3,
+  "4": wall4,
+  "5": wall5,
 }
 
 class Raycaster(object):
@@ -38,9 +48,12 @@ class Raycaster(object):
   def point(self, x, y, c = None):
     screen.set_at((x, y), c)
 
-  def draw_rectangle(self, x, y, c):
-    for cx in range(x, x + self.blocksize + 1):
-      for cy in range(y, y + self.blocksize + 1):
+  def draw_rectangle(self, x, y, texture):
+    for cx in range(x, x + 50):
+      for cy in range(y, y + 50):
+        tx = int((cx - x)*128 / 50)
+        ty = int((cy - y)*128 / 50)
+        c = texture.get_at((tx, ty))
         self.point(cx, cy, c)
 
   def load_map(self, filename):
@@ -53,25 +66,33 @@ class Raycaster(object):
     while True:
       x = self.player["x"] + d*cos(a)
       y = self.player["y"] + d*sin(a)
-      x = int(x)
-      y = int(y)
 
       i = int(x/50)
       j = int(y/50)
 
       if self.map[j][i] != ' ':
-        return d, self.map[j][i]
+        hitx = x - i*50
+        hity = y - j*50
 
-      self.point(x, y, (255, 255, 255))
+        if 1 < hitx < 49:
+          maxhit = hitx
+        else:
+          maxhit = hity
 
-      d += 10
+        tx = int(maxhit * 128 / 50)
 
-  def draw_stake(self, x, h, c):
-    # draw a stake with x, y at the middle
+        return d, self.map[j][i], tx
 
+      self.point(int(x), int(y), (255, 255, 255))
+
+      d += 1
+
+  def draw_stake(self, x, h, texture, tx):
     start = int(250 - h/2)
     end = int(250 + h/2)
     for y in range(start, end):
+      ty = int(((y - start)*128)/(end - start))
+      c = texture.get_at((tx, ty))
       self.point(x, y, c)
 
 
@@ -81,7 +102,7 @@ class Raycaster(object):
         i = int(x/50)
         j = int(y/50)
         if self.map[j][i] != ' ':
-          self.draw_rectangle(x, y, colors[self.map[j][i]])
+          self.draw_rectangle(x, y, textures[self.map[j][i]])
 
     self.point(self.player["x"], self.player["y"], (255, 255, 255))
 
@@ -90,21 +111,22 @@ class Raycaster(object):
       self.point(501, i, (0, 0, 0))
       self.point(499, i, (0, 0, 0))
 
-    for i in range(1, 500):
+    for i in range(0, 500):
       a =  self.player["a"] - self.player["fov"]/2 + self.player["fov"]*i/500
-      d, c = self.cast_ray(a)
+      d, c, tx = self.cast_ray(a)
       x = 500 + i
-      h = 500/(d*cos(a-self.player["a"])) * 100
-      self.draw_stake(x, h, colors[c])
+      h = 500/(d*cos(a-self.player["a"])) * 70
+      self.draw_stake(x, h, textures[c], tx)
 
 pygame.init()
-screen = pygame.display.set_mode((1000, 500)) #, pygame.FULLSCREEN)
+screen = pygame.display.set_mode((1000, 500), pygame.DOUBLEBUF|pygame.HWACCEL) #, pygame.FULLSCREEN)
+screen.set_alpha(None)
 r = Raycaster(screen)
 r.load_map('./map.txt')
 
 c = 0
 while True:
-  screen.fill((0, 0, 0))
+  screen.fill((113, 113, 113))
   r.render()
 
   for e in pygame.event.get():
@@ -124,5 +146,11 @@ while True:
         r.player["y"] += 10
       elif e.key == pygame.K_DOWN:
         r.player["y"] -= 10
+
+      if e.key == pygame.K_f:
+        if screen.get_flags() and pygame.FULLSCREEN:
+            pygame.display.set_mode((1000, 500))
+        else:
+            pygame.display.set_mode((1000, 500), pygame.FULLSCREEN)
 
   pygame.display.flip()
