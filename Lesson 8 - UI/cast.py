@@ -187,7 +187,7 @@ class Raycaster(object):
     self.draw_player(1000 - 256 - 128, 500 - 256)
 
 pygame.init()
-screen = pygame.display.set_mode((1000, 500), pygame.DOUBLEBUF|pygame.HWACCEL) #, pygame.FULLSCREEN)
+screen = pygame.display.set_mode((1000, 500), pygame.DOUBLEBUF|pygame.HWACCEL|pygame.FULLSCREEN|pygame.HWSURFACE)
 screen.set_alpha(None)
 r = Raycaster(screen)
 r.load_map('./map.txt')
